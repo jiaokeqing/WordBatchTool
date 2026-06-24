@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 import json
+import mimetypes
 import shutil
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -36,7 +40,7 @@ app.add_middleware(
 )
 
 
-def bundled_frontend_dir() -> Path | None:
+def bundled_frontend_dir() -> Optional[Path]:
     candidates = [
         Path(getattr(sys, "_MEIPASS", "")) / "frontend",
         Path(__file__).resolve().parents[2] / "frontend" / "dist",
@@ -48,14 +52,16 @@ def bundled_frontend_dir() -> Path | None:
 
 
 frontend_dir = bundled_frontend_dir()
+mimetypes.add_type("application/javascript", ".js")
+mimetypes.add_type("text/css", ".css")
 
 @app.post("/api/jobs", response_model=JobSummary)
 async def create_job(
     files: list[UploadFile] = File(default=[]),
     template_config: str = Form(default="{}"),
     export_pdf: bool = Form(default=True),
-    server_directory: str | None = Form(default=None),
-    sample_template: UploadFile | None = File(default=None),
+    server_directory: Optional[str] = Form(default=None),
+    sample_template: Optional[UploadFile] = File(default=None),
 ) -> dict:
     config = TemplateConfig.model_validate(json.loads(template_config or "{}"))
     upload_items = [file for file in files if file.filename]
@@ -128,6 +134,18 @@ def get_job(job_id: str) -> dict:
     return detail
 
 
+@app.delete("/api/jobs/{job_id}")
+def delete_job(job_id: str) -> dict:
+    job = repository.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="任务不存在。")
+    job_dir = settings.jobs_dir / job_id
+    if job_dir.exists():
+        shutil.rmtree(job_dir, ignore_errors=True)
+    repository.delete_job(job_id)
+    return {"ok": True}
+
+
 @app.get("/api/jobs/{job_id}/download")
 def download_job(job_id: str) -> FileResponse:
     job = repository.get_job(job_id)
@@ -150,7 +168,7 @@ async def template_preview(sample_template: UploadFile = File(...)) -> TemplateP
     return preview_template(path)
 
 
-def _job_summary(job: dict | None) -> dict:
+def _job_summary(job: Optional[dict]) -> dict:
     if not job:
         raise HTTPException(status_code=404, detail="任务不存在。")
     return {

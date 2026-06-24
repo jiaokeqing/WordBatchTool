@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Download, FileUp, FileText, FolderInput, Play, RefreshCw, UploadCloud } from 'lucide-react';
+import { Download, FileUp, FileText, FolderInput, Mail, Play, RefreshCw, Trash2, UploadCloud, X } from 'lucide-react';
 import './styles.css';
+import authorAvatar from './assets/author-avatar.jpg';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
@@ -41,8 +42,32 @@ function App() {
   const [selectedJob, setSelectedJob] = useState(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const fileInputRef = useRef(null);
+  const folderInputRef = useRef(null);
+  const sampleInputRef = useRef(null);
 
   const selectedCount = useMemo(() => files.length + (serverDirectory.trim() ? 1 : 0), [files, serverDirectory]);
+
+  function resetFileInputs() {
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (folderInputRef.current) folderInputRef.current.value = '';
+    if (sampleInputRef.current) sampleInputRef.current.value = '';
+  }
+
+  function handleFilesSelected(fileList) {
+    setFiles(Array.from(fileList || []));
+  }
+
+  function removeSelectedFile(index) {
+    setFiles((current) => current.filter((_, itemIndex) => itemIndex !== index));
+    resetFileInputs();
+  }
+
+  function clearSelectedFiles() {
+    setFiles([]);
+    resetFileInputs();
+  }
 
   async function loadJobs() {
     const response = await fetch(`${API_BASE}/api/jobs`);
@@ -86,6 +111,7 @@ function App() {
       setFiles([]);
       setSampleTemplate(null);
       setServerDirectory('');
+      resetFileInputs();
       setSelectedJob(job);
       await loadJobs();
     } catch (error) {
@@ -100,16 +126,82 @@ function App() {
     setSelectedJob(detail);
   }
 
+  async function deleteJob(jobId, event) {
+    event.stopPropagation();
+    if (!window.confirm('确定删除这个任务吗？')) {
+      return;
+    }
+    const response = await fetch(`${API_BASE}/api/jobs/${jobId}`, { method: 'DELETE' });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      setMessage(error.detail || '删除任务失败');
+      return;
+    }
+    if (selectedJob?.id === jobId) {
+      setSelectedJob(null);
+    }
+    await loadJobs();
+  }
+
+  async function downloadJob(jobId) {
+    setMessage('');
+    try {
+      if (window.pywebview?.api?.save_zip) {
+        const result = await window.pywebview.api.save_zip(jobId);
+        if (!result.ok) {
+          if (!result.cancelled) {
+            setMessage(result.message || '下载失败');
+          }
+          return;
+        }
+        setMessage(`已保存到：${result.path}`);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE}/api/jobs/${jobId}/download`);
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        setMessage(error.detail || '下载失败');
+        return;
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${jobId}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setMessage(`下载失败：${error.message}`);
+    }
+  }
+
   return (
     <main className="shell">
       <section className="topbar">
-        <div>
+        <div className="titleBlock">
           <h1>批量 Word 格式处理</h1>
           <p>局域网批量排版、PDF 导出和 ZIP 结果下载</p>
         </div>
-        <button className="iconButton" onClick={loadJobs} title="刷新任务">
-          <RefreshCw size={18} />
-        </button>
+        <div className="topActions">
+          <div className="authorBadge" aria-label="作者信息">
+            <button type="button" className="avatarButton" onClick={() => setShowAvatarModal(true)} title="点一下">
+              <img className="authorAvatar" src={authorAvatar} alt="JIAOKEQING" />
+            </button>
+            <div className="authorText">
+              <strong>JIAOKEQING</strong>
+              <a href="mailto:jiaokeqing888@proton.me">
+                <Mail size={13} />
+                <span>jiaokeqing888@proton.me</span>
+              </a>
+            </div>
+          </div>
+          <button className="iconButton" onClick={loadJobs} title="刷新任务">
+            <RefreshCw size={18} />
+          </button>
+        </div>
       </section>
 
       <section className="workspace">
@@ -123,7 +215,7 @@ function App() {
             <div className="sectionTitle">文件来源</div>
             <div className="uploadGrid">
               <label className="uploadTile">
-                <input type="file" accept=".doc,.docx" multiple onChange={(event) => setFiles(Array.from(event.target.files || []))} />
+                <input ref={fileInputRef} type="file" accept=".doc,.docx" multiple onChange={(event) => handleFilesSelected(event.target.files)} />
                 <FileUp size={24} />
                 <strong>选择 Word 文件</strong>
                 <span>支持单个或多个 .doc/.docx</span>
@@ -134,7 +226,8 @@ function App() {
                   accept=".doc,.docx"
                   multiple
                   webkitdirectory=""
-                  onChange={(event) => setFiles(Array.from(event.target.files || []))}
+                  ref={folderInputRef}
+                  onChange={(event) => handleFilesSelected(event.target.files)}
                 />
                 <FolderInput size={24} />
                 <strong>选择文件夹</strong>
@@ -144,10 +237,27 @@ function App() {
             <div className="selectionBar">
               <UploadCloud size={16} />
               <span>{files.length ? `已选择 ${files.length} 个文件` : '尚未选择文件'}</span>
+              {files.length > 0 && (
+                <button type="button" className="textButton" onClick={clearSelectedFiles}>
+                  清空
+                </button>
+              )}
             </div>
+            {files.length > 0 && (
+              <div className="selectedFiles">
+                {files.map((file, index) => (
+                  <div className="selectedFile" key={`${file.webkitRelativePath || file.name}-${file.size}-${index}`}>
+                    <span>{file.webkitRelativePath || file.name}</span>
+                    <button type="button" className="miniIconButton" onClick={() => removeSelectedFile(index)} title="移除文件">
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
 
-          <section className="formSection compactSection">
+          <section className="formSection compactSection hiddenSection">
             <div className="sectionTitle">可选来源</div>
             <label className="field">
               <span>服务器共享目录</span>
@@ -156,7 +266,7 @@ function App() {
 
             <label className="field">
               <span>样本文档模板</span>
-              <input type="file" accept=".docx" onChange={(event) => setSampleTemplate(event.target.files?.[0] || null)} />
+              <input ref={sampleInputRef} type="file" accept=".docx" onChange={(event) => setSampleTemplate(event.target.files?.[0] || null)} />
             </label>
           </section>
 
@@ -239,6 +349,11 @@ function App() {
                 <strong>{job.id.slice(0, 8)}</strong>
                 <span>{job.succeeded_files}/{job.total_files} 成功</span>
                 <span>{new Date(job.created_at).toLocaleString()}</span>
+                <span className="jobActions">
+                  <button type="button" className="miniIconButton danger" onClick={(event) => deleteJob(job.id, event)} title="删除任务">
+                    <Trash2 size={15} />
+                  </button>
+                </span>
               </button>
             ))}
           </div>
@@ -253,10 +368,10 @@ function App() {
               <p>{statusLabel(selectedJob.status)} · 成功 {selectedJob.succeeded_files} · 失败 {selectedJob.failed_files}</p>
             </div>
             {selectedJob.download_ready && (
-              <a className="primary linkButton" href={`${API_BASE}/api/jobs/${selectedJob.id}/download`}>
+              <button type="button" className="primary linkButton" onClick={() => downloadJob(selectedJob.id)}>
                 <Download size={17} />
                 <span>下载 ZIP</span>
-              </a>
+              </button>
             )}
           </div>
           <div className="fileTable">
@@ -269,6 +384,18 @@ function App() {
             ))}
           </div>
         </section>
+      )}
+
+      {showAvatarModal && (
+        <div className="modalBackdrop" role="presentation" onClick={() => setShowAvatarModal(false)}>
+          <div className="avatarModal" role="dialog" aria-modal="true" aria-label="头像彩蛋" onClick={(event) => event.stopPropagation()}>
+            <img className="modalAvatar" src={authorAvatar} alt="JIAOKEQING" />
+            <div className="modalText">苗姐，说蟹蟹٩('ω')و</div>
+            <button type="button" className="modalButton" onClick={() => setShowAvatarModal(false)}>
+              收到
+            </button>
+          </div>
+        </div>
       )}
     </main>
   );

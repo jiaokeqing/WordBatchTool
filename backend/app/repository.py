@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import json
 import uuid
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 from .config import settings
 from .database import connect, utc_now
@@ -41,7 +44,7 @@ def list_jobs() -> list[dict]:
         return db.execute("SELECT * FROM jobs ORDER BY created_at DESC").fetchall()
 
 
-def get_job(job_id: str) -> dict | None:
+def get_job(job_id: str) -> Optional[dict]:
     with connect() as db:
         return db.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
 
@@ -51,7 +54,17 @@ def get_job_files(job_id: str) -> list[dict]:
         return db.execute("SELECT * FROM job_files WHERE job_id = ? ORDER BY relative_path", (job_id,)).fetchall()
 
 
-def update_job_status(job_id: str, status: str, zip_path: str | None = None) -> None:
+def delete_job(job_id: str) -> bool:
+    with connect() as db:
+        job = db.execute("SELECT id FROM jobs WHERE id = ?", (job_id,)).fetchone()
+        if not job:
+            return False
+        db.execute("DELETE FROM job_files WHERE job_id = ?", (job_id,))
+        db.execute("DELETE FROM jobs WHERE id = ?", (job_id,))
+        return True
+
+
+def update_job_status(job_id: str, status: str, zip_path: Optional[str] = None) -> None:
     with connect() as db:
         db.execute(
             "UPDATE jobs SET status = ?, zip_path = COALESCE(?, zip_path), updated_at = ? WHERE id = ?",
@@ -59,7 +72,7 @@ def update_job_status(job_id: str, status: str, zip_path: str | None = None) -> 
         )
 
 
-def update_file_result(file_id: str, status: str, message: str = "", output_path: str | None = None) -> None:
+def update_file_result(file_id: str, status: str, message: str = "", output_path: Optional[str] = None) -> None:
     with connect() as db:
         db.execute(
             """

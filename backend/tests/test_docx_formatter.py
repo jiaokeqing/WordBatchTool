@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from docx import Document
+from docx.enum.text import WD_COLOR_INDEX
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 
@@ -40,14 +41,16 @@ def test_apply_builtin_template(tmp_path: Path) -> None:
     assert round(section.right_margin.cm, 1) == 2.6
     assert len(document.paragraphs) == 5
     assert document.paragraphs[0].alignment == 1
-    assert document.paragraphs[1].paragraph_format.first_line_indent.pt == 0
-    assert document.paragraphs[2].paragraph_format.first_line_indent.pt == 0
-    assert document.paragraphs[3].paragraph_format.first_line_indent.pt == 0
+    assert document.paragraphs[1]._element.pPr.ind.get(qn("w:firstLineChars")) is None
+    assert document.paragraphs[2]._element.pPr.ind.get(qn("w:firstLineChars")) is None
+    assert document.paragraphs[3]._element.pPr.ind.get(qn("w:firstLineChars")) is None
     assert document.paragraphs[1].runs[0]._element.rPr.rFonts.get(qn("w:eastAsia")) == "黑体"
     assert document.paragraphs[2].runs[0]._element.rPr.rFonts.get(qn("w:eastAsia")) == "楷体_GB2312"
     assert document.paragraphs[4].runs[0].font.size.pt == 16
     assert document.paragraphs[4].paragraph_format.line_spacing.pt == 28
-    assert document.paragraphs[4].paragraph_format.first_line_indent.pt == 32
+    assert document.paragraphs[4]._element.pPr.spacing.get(qn("w:beforeLines")) == "0"
+    assert document.paragraphs[4]._element.pPr.spacing.get(qn("w:afterLines")) == "0"
+    assert document.paragraphs[4]._element.pPr.ind.get(qn("w:firstLineChars")) == "200"
     assert "(一)" not in document.paragraphs[4].text
     assert "（一）" in document.paragraphs[4].text
 
@@ -79,7 +82,28 @@ def test_salutation_flush_left_body_indented_and_blank_lines_removed(tmp_path: P
     result = Document(output)
     assert [paragraph.text for paragraph in result.paragraphs] == ["各位老师：", "这是正文第一段。", "这是正文第二段。"]
     assert result.paragraphs[0].alignment == WD_ALIGN_PARAGRAPH.LEFT
-    assert result.paragraphs[0].paragraph_format.first_line_indent.pt == 0
+    assert result.paragraphs[0]._element.pPr.ind.get(qn("w:firstLineChars")) is None
     assert result.paragraphs[1].alignment == WD_ALIGN_PARAGRAPH.LEFT
-    assert result.paragraphs[1].paragraph_format.first_line_indent.pt == 32
-    assert result.paragraphs[2].paragraph_format.first_line_indent.pt == 32
+    assert result.paragraphs[1]._element.pPr.ind.get(qn("w:firstLineChars")) == "200"
+    assert result.paragraphs[2]._element.pPr.ind.get(qn("w:firstLineChars")) == "200"
+
+
+def test_apply_builtin_template_clears_initial_run_emphasis(tmp_path: Path) -> None:
+    source = tmp_path / "emphasis.docx"
+    output = tmp_path / "emphasis.out.docx"
+    document = Document()
+    paragraph = document.add_paragraph()
+    run = paragraph.add_run("需要清理的正文")
+    run.bold = True
+    run.italic = True
+    run.underline = True
+    run.font.highlight_color = WD_COLOR_INDEX.YELLOW
+    document.save(source)
+
+    apply_builtin_template(source, output, BuiltInTemplate())
+
+    result_run = Document(output).paragraphs[0].runs[0]
+    assert result_run.bold is False
+    assert result_run.italic is False
+    assert result_run.underline is False
+    assert result_run.font.highlight_color is None

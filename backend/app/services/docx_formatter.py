@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 from pathlib import Path
 import re
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
+from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt
 
@@ -21,14 +24,17 @@ def apply_builtin_template(input_path: Path, output_path: Path, template: BuiltI
     for index, paragraph in enumerate(document.paragraphs):
         level = detect_paragraph_level(paragraph.text, index)
         font_name, font_size = font_for_level(template, level)
+        paragraph.style = document.styles["Normal"]
         paragraph_format = paragraph.paragraph_format
         paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
         paragraph_format.line_spacing = Pt(template.line_spacing_pt)
         paragraph_format.space_before = Pt(template.space_before_pt)
         paragraph_format.space_after = Pt(template.space_after_pt)
+        set_paragraph_line_spacing(paragraph, before_lines=0, after_lines=0)
         paragraph_format.left_indent = Pt(0)
         paragraph_format.right_indent = Pt(0)
-        paragraph_format.first_line_indent = Pt(font_size * template.first_line_indent_chars) if level == "body" else Pt(0)
+        paragraph_format.first_line_indent = Pt(0)
+        set_first_line_indent_chars(paragraph, template.first_line_indent_chars if level == "body" else 0)
         paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER if level == "title" else WD_ALIGN_PARAGRAPH.LEFT
 
         for run in paragraph.runs:
@@ -115,13 +121,74 @@ def font_for_level(template: BuiltInTemplate, level: str) -> tuple[str, int]:
 
 
 def apply_run_font(run, east_asia_font: str, latin_font: str, size: int) -> None:
+    run.style = None
     run.font.name = latin_font
     run.font.size = Pt(size)
+    run.font.bold = False
+    run.font.italic = False
+    run.font.underline = False
+    run.font.highlight_color = None
     r_pr = run._element.get_or_add_rPr()
+    for tag in ("w:highlight", "w:shd", "w:color"):
+        for element in list(r_pr.findall(qn(tag))):
+            r_pr.remove(element)
+    set_bool_run_property(r_pr, "w:b", False)
+    set_bool_run_property(r_pr, "w:bCs", False)
+    set_bool_run_property(r_pr, "w:i", False)
+    set_bool_run_property(r_pr, "w:iCs", False)
+    set_underline_none(r_pr)
     r_fonts = r_pr.get_or_add_rFonts()
     r_fonts.set(qn("w:eastAsia"), east_asia_font)
     r_fonts.set(qn("w:ascii"), latin_font)
     r_fonts.set(qn("w:hAnsi"), latin_font)
+
+
+def set_first_line_indent_chars(paragraph, chars: int) -> None:
+    p_pr = paragraph._element.get_or_add_pPr()
+    ind = p_pr.ind
+    if ind is None:
+        ind = OxmlElement("w:ind")
+        p_pr.append(ind)
+    for attr in ("w:firstLine", "w:hanging"):
+        if ind.get(qn(attr)) is not None:
+            del ind.attrib[qn(attr)]
+    if chars > 0:
+        ind.set(qn("w:firstLineChars"), str(chars * 100))
+    elif ind.get(qn("w:firstLineChars")) is not None:
+        del ind.attrib[qn("w:firstLineChars")]
+
+
+def set_paragraph_line_spacing(paragraph, before_lines: int, after_lines: int) -> None:
+    p_pr = paragraph._element.get_or_add_pPr()
+    spacing = p_pr.spacing
+    if spacing is None:
+        spacing = OxmlElement("w:spacing")
+        p_pr.append(spacing)
+    spacing.set(qn("w:beforeLines"), str(before_lines * 100))
+    spacing.set(qn("w:afterLines"), str(after_lines * 100))
+    for attr in ("w:beforeAutospacing", "w:afterAutospacing"):
+        if spacing.get(qn(attr)) is not None:
+            del spacing.attrib[qn(attr)]
+
+
+def set_bool_run_property(r_pr, tag: str, enabled: bool) -> None:
+    elements = r_pr.findall(qn(tag))
+    element = elements[0] if elements else OxmlElement(tag)
+    for extra in elements[1:]:
+        r_pr.remove(extra)
+    element.set(qn("w:val"), "1" if enabled else "0")
+    if not elements:
+        r_pr.append(element)
+
+
+def set_underline_none(r_pr) -> None:
+    elements = r_pr.findall(qn("w:u"))
+    element = elements[0] if elements else OxmlElement("w:u")
+    for extra in elements[1:]:
+        r_pr.remove(extra)
+    element.set(qn("w:val"), "none")
+    if not elements:
+        r_pr.append(element)
 
 
 def normalize_text(text: str, template: BuiltInTemplate) -> str:

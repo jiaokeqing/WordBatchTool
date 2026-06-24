@@ -10,10 +10,16 @@ __pycache__/
 backend/data/
 data/
 
+# Build artifacts
+backend/build*/
+backend/dist*/
+
 # Frontend
+.npm-cache/
 .pnpm-store/
 frontend/node_modules/
 frontend/dist/
+frontend/package-lock.json
 
 # Logs
 *.log

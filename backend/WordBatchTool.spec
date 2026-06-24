@@ -2,7 +2,8 @@
 
 from pathlib import Path
 
-frontend_dist = Path("..") / "frontend" / "dist"
+spec_dir = Path(SPEC).resolve().parent
+frontend_dist = spec_dir.parent / "frontend" / "dist"
 
 a = Analysis(
     ["launcher.py"],
@@ -12,6 +13,10 @@ a = Analysis(
     hiddenimports=[
         "multipart",
         "python_multipart",
+        "pythoncom",
+        "pywintypes",
+        "win32com",
+        "win32com.client",
         "webview",
         "webview.platforms.winforms",
         "webview.platforms.edgechromium",

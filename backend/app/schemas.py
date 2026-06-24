@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -27,7 +31,7 @@ class BuiltInTemplate(BaseModel):
 class TemplateConfig(BaseModel):
     mode: str = "builtin"
     builtin: BuiltInTemplate = Field(default_factory=BuiltInTemplate)
-    sample_template_filename: str | None = None
+    sample_template_filename: Optional[str] = None
 
 
 class JobSummary(BaseModel):
@@ -48,7 +52,7 @@ class JobFileResult(BaseModel):
     relative_path: str
     status: str
     message: str
-    output_path: str | None
+    output_path: Optional[str]
 
 
 class JobDetail(JobSummary):
