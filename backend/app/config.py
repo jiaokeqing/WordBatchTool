@@ -1,12 +1,19 @@
 from pathlib import Path
+import sys
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def default_data_dir() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent / "data"
+    return Path("data")
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="WORD_BATCH_")
 
-    data_dir: Path = Path("data")
+    data_dir: Path = default_data_dir()
     allowed_import_dirs: str = ""
     max_files_per_job: int = 100
     retention_hours: int = 24

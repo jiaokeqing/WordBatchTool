@@ -51,4 +51,6 @@ pytest
 .\build_windows.ps1
 ```
 
-生成文件位于 `backend\dist\WordBatchTool.exe`。双击后会启动本机服务并打开浏览器访问 `http://127.0.0.1:8000`。
+生成文件位于 `backend\dist\WordBatchTool.exe`。双击后会打开 Windows 客户端窗口，前端页面嵌入在窗口内，后端服务在本机后台运行。
+
+运行数据会保存到 exe 同目录的 `data` 文件夹中。PDF 导出和 `.doc` 转换仍需要 Windows 上安装可自动化调用的 WPS/Office。
