@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "文档工作台",
+  "version": "1.0.0",
+  "identifier": "com.jiaokeqing.wordbatchworkbench",
+  "build": {
+    "beforeDevCommand": "pnpm run dev -- --host 127.0.0.1 --port 5173",
+    "devUrl": "http://127.0.0.1:5173",
+    "beforeBuildCommand": "VITE_API_BASE=http://127.0.0.1:8765 pnpm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "文档工作台",
+        "width": 1280,
+        "height": 860,
+        "minWidth": 980,
+        "minHeight": 700
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "externalBin": [
+      "binaries/word-batch-sidecar"
+    ]
+  }
+}

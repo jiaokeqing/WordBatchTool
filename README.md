@@ -54,3 +54,9 @@ pytest
 生成文件位于 `backend\dist\WordBatchTool.exe`。双击后会打开 Windows 客户端窗口，前端页面嵌入在窗口内，后端服务在本机后台运行。
 
 运行数据会保存到 exe 同目录的 `data` 文件夹中。PDF 导出和 `.doc` 转换仍需要 Windows 上安装可自动化调用的 WPS/Office。
+
+## 新版 Tauri 桌面壳
+
+新版跨平台桌面壳脚手架位于 `frontend/src-tauri`，Python API sidecar 入口为 `backend/sidecar.py`。
+
+详细说明见 `TAURI_DESKTOP.md`。当前目标是适配 Windows、华为电脑和统信 UOS；Windows 优先使用 WPS/Office，统信 UOS/Linux 优先使用 LibreOffice headless。

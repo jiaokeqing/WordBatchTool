@@ -9,9 +9,9 @@
 
 ## 推荐架构
 
-- 桌面壳：Tauri。
+- 桌面壳：Tauri，脚手架位于 `frontend/src-tauri/`。
 - 前端：React + Vite + 自定义 CSS tokens。
-- 本地处理服务：Python sidecar/worker。
+- 本地处理服务：Python sidecar/worker，入口为 `backend/sidecar.py`。
 - 本地存储：SQLite + 文件系统任务目录。
 - 打包方式：每个平台在目标系统上分别构建。
 
@@ -49,3 +49,10 @@
 ## 清理说明
 
 上一轮被中断的半成品研发改动已从代码目录恢复，当前新分支只保留设计稿和新架构说明，后续实现应基于本架构重新拆分任务。
+
+## Tauri 脚手架
+
+- `frontend/src-tauri/tauri.conf.json` 配置窗口、Vite 构建和 sidecar。
+- `frontend/src-tauri/src/lib.rs` 在应用启动时拉起 `word-batch-sidecar`。
+- `scripts/build_sidecar.py` 用 PyInstaller 生成带 target triple 后缀的 sidecar 二进制。
+- 详细步骤见根目录 `TAURI_DESKTOP.md`。

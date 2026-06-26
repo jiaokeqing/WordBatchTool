@@ -1,0 +1,17 @@
+[package]
+name = "word-batch-workbench"
+version = "1.0.0"
+description = "文档工作台"
+authors = ["JIAOKEQING"]
+edition = "2021"
+
+[lib]
+name = "word_batch_workbench_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
