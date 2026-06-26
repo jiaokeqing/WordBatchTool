@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>文档工作台 UI 设计图</title>
+    <style>
+      :root {
+        --ink: #172026;
+        --muted: #64717b;
+        --line: #dfe6eb;
+        --soft: #f5f7f9;
+        --paper: #ffffff;
+        --green: #1f6f61;
+        --green-2: #e6f3ef;
+        --blue: #286fae;
+        --blue-2: #e8f2ff;
+        --red: #b64235;
+        --red-2: #fff0ee;
+        --amber: #a66512;
+        --amber-2: #fff5df;
+        --shadow: 0 18px 50px rgba(23, 32, 38, 0.10);
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: #e8edf1;
+        color: var(--ink);
+        font-family: Inter, "SF Pro Display", "Microsoft YaHei", system-ui, sans-serif;
+      }
+
+      .board {
+        width: 1440px;
+        height: 960px;
+        padding: 28px;
+        background:
+          linear-gradient(90deg, rgba(31,111,97,.05) 1px, transparent 1px),
+          linear-gradient(rgba(31,111,97,.04) 1px, transparent 1px),
+          #eef2f5;
+        background-size: 32px 32px;
+      }
+
+      .app {
+        height: 904px;
+        display: grid;
+        grid-template-columns: 248px 1fr;
+        overflow: hidden;
+        border: 1px solid #cfd9df;
+        border-radius: 14px;
+        background: var(--paper);
+        box-shadow: var(--shadow);
+      }
+
+      .side {
+        padding: 22px 18px;
+        background: #f8fafb;
+        border-right: 1px solid var(--line);
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 26px;
+      }
+      .mark {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 21px;
+        font-weight: 750;
+        background: linear-gradient(135deg, #1f6f61, #286fae);
+        box-shadow: 0 10px 22px rgba(31,111,97,.22);
+      }
+      .brand strong { display:block; font-size: 18px; }
+      .brand span { display:block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+
+      .nav { display: grid; align-content: start; gap: 8px; }
+      .nav button {
+        height: 44px;
+        border: 0;
+        border-radius: 8px;
+        padding: 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: transparent;
+        color: #40515d;
+        font-size: 15px;
+        text-align: left;
+      }
+      .nav button.active {
+        background: var(--green-2);
+        color: var(--green);
+        font-weight: 650;
+      }
+      .icon {
+        width: 18px;
+        height: 18px;
+        display: inline-grid;
+        place-items: center;
+        font-size: 15px;
+      }
+
+      .offline {
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 0 10px;
+        border: 1px solid #cfe1dc;
+        border-radius: 8px;
+        background: #fff;
+        color: var(--green);
+        font-size: 13px;
+      }
+
+      .main {
+        min-width: 0;
+        padding: 24px;
+        background: var(--soft);
+      }
+      .top {
+        height: 70px;
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+      }
+      h1, h2, p { margin: 0; }
+      h1 { font-size: 28px; letter-spacing: 0; font-weight: 720; }
+      .top p { margin-top: 7px; color: var(--muted); font-size: 14px; }
+
+      .button {
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 14px;
+        border: 1px solid #cfddd9;
+        border-radius: 7px;
+        background: #fff;
+        color: var(--green);
+        font-weight: 650;
+        font-size: 14px;
+      }
+      .button.primary {
+        border-color: var(--green);
+        background: var(--green);
+        color: #fff;
+      }
+      .button.danger {
+        border-color: #ffd0c9;
+        background: var(--red-2);
+        color: var(--red);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.1fr .9fr;
+        gap: 16px;
+      }
+      .stack { display: grid; gap: 16px; }
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        padding: 18px;
+      }
+      .panelHead {
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .panelHead h2 {
+        font-size: 17px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .uploadGrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .upload {
+        height: 132px;
+        border: 1px dashed #8ea5b3;
+        border-radius: 9px;
+        display: grid;
+        align-content: center;
+        justify-items: center;
+        gap: 8px;
+        color: #41525e;
+        background: #fbfcfd;
+      }
+      .upload strong { font-size: 15px; }
+      .upload span { color: var(--muted); font-size: 12px; }
+
+      .field { display: grid; gap: 7px; margin-top: 14px; }
+      .field label, .mutedLabel { color: #43525c; font-size: 13px; font-weight: 650; }
+      .input {
+        height: 38px;
+        border: 1px solid #cfd9df;
+        border-radius: 7px;
+        padding: 0 11px;
+        color: #77838b;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+      }
+      .selected {
+        margin-top: 12px;
+        height: 38px;
+        border-radius: 7px;
+        background: #eef4f6;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 12px;
+        color: #52616b;
+        font-size: 13px;
+      }
+
+      .templateCards { display: grid; gap: 10px; }
+      .templateCard {
+        min-height: 74px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid #e2e8ed;
+        border-radius: 8px;
+        padding: 12px;
+        background: #fbfcfd;
+      }
+      .templateCard.active {
+        border-color: #8fbeb3;
+        background: var(--green-2);
+      }
+      .templateCard strong, .row strong { display: block; font-size: 15px; }
+      .templateCard small, .row small { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; }
+      .pill {
+        min-width: 48px;
+        height: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: #fff;
+        color: var(--green);
+        border: 1px solid #cfe1dc;
+        font-size: 12px;
+        font-style: normal;
+      }
+
+      .switch {
+        min-height: 58px;
+        display: grid;
+        grid-template-columns: 38px 1fr;
+        gap: 10px;
+        align-items: center;
+        border: 1px solid #e2e8ed;
+        border-radius: 8px;
+        padding: 12px;
+      }
+      .toggle {
+        width: 38px;
+        height: 22px;
+        border-radius: 999px;
+        background: var(--green);
+        position: relative;
+      }
+      .toggle::after {
+        content: "";
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #fff;
+        position: absolute;
+        top: 3px;
+        right: 3px;
+      }
+
+      .table { display: grid; gap: 8px; }
+      .row {
+        min-height: 54px;
+        display: grid;
+        grid-template-columns: 86px 100px 1fr 168px 34px;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid #e1e8ed;
+        border-radius: 8px;
+        background: #fbfcfd;
+        padding: 0 12px;
+        font-size: 13px;
+      }
+      .status {
+        width: 74px;
+        height: 26px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        font-size: 12px;
+      }
+      .running, .queued { background: var(--blue-2); color: var(--blue); }
+      .done { background: var(--green-2); color: var(--green); }
+      .fail { background: var(--red-2); color: var(--red); }
+      .warn { background: var(--amber-2); color: var(--amber); }
+
+      .mini {
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        border: 0;
+        border-radius: 6px;
+        background: #eef4f6;
+        color: #52616b;
+      }
+
+      .details {
+        margin-top: 16px;
+        display: grid;
+        gap: 7px;
+      }
+      .fileRow {
+        min-height: 42px;
+        display: grid;
+        grid-template-columns: 86px 1fr 1.2fr;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid #edf1f4;
+        font-size: 13px;
+      }
+
+      .templateLayout {
+        display: grid;
+        grid-template-columns: 390px 1fr;
+        gap: 16px;
+      }
+      .templateList { display: grid; gap: 9px; }
+      .templateItem {
+        min-height: 68px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        border: 1px solid #e1e8ed;
+        border-radius: 8px;
+        padding: 12px;
+        background: #fbfcfd;
+      }
+      .templateItem.active {
+        background: var(--green-2);
+        border-color: #8fbeb3;
+      }
+      .badgeLine { display:flex; gap: 6px; }
+
+      .formGrid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+      .checks {
+        margin-top: 12px;
+        display: flex;
+        gap: 18px;
+        color: #43525c;
+        font-size: 14px;
+      }
+      .actions {
+        margin-top: 18px;
+        display: flex;
+        gap: 10px;
+      }
+      .hint {
+        margin-bottom: 14px;
+        padding: 10px 12px;
+        border: 1px solid #e3e9ee;
+        border-radius: 8px;
+        background: #f8fafb;
+        color: #52616b;
+        font-size: 13px;
+      }
+
+      .settingsLayout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .platformGrid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+      .platformCard {
+        min-height: 130px;
+        border: 1px solid #e1e8ed;
+        border-radius: 10px;
+        background: #fbfcfd;
+        padding: 16px;
+        display: grid;
+        align-content: start;
+        gap: 10px;
+      }
+      .platformCard.active {
+        border-color: #8fbeb3;
+        background: var(--green-2);
+      }
+      .platformCard strong { font-size: 16px; }
+      .platformCard span { color: var(--muted); font-size: 13px; line-height: 1.5; }
+      .engineList { display: grid; gap: 10px; }
+      .engineRow {
+        min-height: 58px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 12px;
+        border: 1px solid #e1e8ed;
+        border-radius: 8px;
+        background: #fbfcfd;
+        padding: 12px;
+      }
+      .engineRow strong { display: block; font-size: 15px; }
+      .engineRow small { display: block; margin-top: 5px; color: var(--muted); }
+      dl { margin: 0; display: grid; gap: 10px; }
+      dl div {
+        display: grid;
+        grid-template-columns: 110px 1fr;
+        gap: 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #edf1f4;
+      }
+      dt { color: var(--muted); font-size: 13px; }
+      dd { margin: 0; font-size: 13px; word-break: break-all; }
+      .updateBox {
+        margin-top: 14px;
+        padding: 12px;
+        display: grid;
+        gap: 6px;
+        border: 1px solid #cfe1dc;
+        border-radius: 8px;
+        background: var(--green-2);
+        color: var(--green);
+        font-size: 13px;
+      }
+      .author {
+        margin-top: 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border: 1px solid #e2e8ed;
+        border-radius: 8px;
+        padding: 12px;
+      }
+      .avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #203b55, #9bb7c1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board" id="process">
+      <div class="app">
+        <aside class="side">
+          <div>
+            <div class="brand"><div class="mark">W</div><div><strong>文档工作台</strong><span>离线批量处理</span></div></div>
+            <nav class="nav">
+              <button class="active"><span class="icon">▦</span>处理任务</button>
+              <button><span class="icon">▣</span>模板库</button>
+              <button><span class="icon">◷</span>任务记录</button>
+              <button><span class="icon">⚙</span>设置</button>
+            </nav>
+          </div>
+          <div></div>
+          <div class="offline"><span class="icon">✓</span>核心功能离线可用</div>
+        </aside>
+        <main class="main">
+          <header class="top"><div><h1>处理任务</h1><p>选择文档、套用模板，然后批量输出结果包。</p></div><button class="button">↻ 刷新</button></header>
+          <div class="grid">
+            <section class="panel">
+              <div class="panelHead"><h2><span class="icon">⇧</span>选择来源</h2></div>
+              <div class="uploadGrid">
+                <div class="upload"><span class="icon">⇧</span><strong>选择 Word 文件</strong><span>支持多个 .doc / .docx</span></div>
+                <div class="upload"><span class="icon">▤</span><strong>选择文件夹</strong><span>保留相对路径</span></div>
+              </div>
+              <div class="selected"><span>已选择 24 个文件</span><span>清空</span></div>
+              <div class="details">
+                <div class="fileRow"><span class="status queued">待处理</span><span>办公室/通知.docx</span><span>保留文件夹路径</span></div>
+                <div class="fileRow"><span class="status queued">待处理</span><span>办公室/会议纪要.docx</span><span>将套用图片格式要求</span></div>
+              </div>
+            </section>
+            <div class="stack">
+              <section class="panel">
+                <div class="panelHead"><h2><span class="icon">▣</span>选择模板</h2><button class="button">管理</button></div>
+                <div class="templateCards">
+                  <div class="templateCard active"><span><strong>图片格式要求</strong><small>标题居中，正文仿宋，标题顶格，正文首行缩进。</small></span><em class="pill">默认</em></div>
+                  <div class="templateCard"><span><strong>办公室模板 A</strong><small>正文 16 号，行距 28 磅，左右边距规范。</small></span></div>
+                  <div class="templateCard"><span><strong>会议纪要</strong><small>保留标题层级，自动清理空段落。</small></span></div>
+                </div>
+              </section>
+              <section class="panel">
+                <div class="panelHead"><h2><span class="icon">▧</span>输出选项</h2></div>
+                <div class="switch"><div class="toggle"></div><span><strong>导出 PDF</strong><small style="display:block;margin-top:5px;color:var(--muted)">关闭后输出排版后的 DOCX</small></span></div>
+                <div class="actions"><button class="button primary" style="width:100%">▶ 开始处理</button></div>
+              </section>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="board" id="templates">
+      <div class="app">
+        <aside class="side">
+          <div><div class="brand"><div class="mark">W</div><div><strong>文档工作台</strong><span>离线批量处理</span></div></div><nav class="nav"><button><span class="icon">▦</span>处理任务</button><button class="active"><span class="icon">▣</span>模板库</button><button><span class="icon">◷</span>任务记录</button><button><span class="icon">⚙</span>设置</button></nav></div>
+          <div></div><div class="offline"><span class="icon">✓</span>核心功能离线可用</div>
+        </aside>
+        <main class="main">
+          <header class="top"><div><h1>模板库</h1><p>管理可离线复用的本地格式模板。</p></div><button class="button">＋ 新建模板</button></header>
+          <div class="templateLayout">
+            <section class="panel">
+              <div class="panelHead"><h2><span class="icon">▣</span>本地模板</h2></div>
+              <div class="templateList">
+                <div class="templateItem active"><span><strong>图片格式要求</strong><small>内置公文排版模板</small></span><span class="badgeLine"><em class="pill">内置</em><em class="pill">默认</em></span></div>
+                <div class="templateItem"><span><strong>办公室模板 A</strong><small>常用内部文件格式</small></span></div>
+                <div class="templateItem"><span><strong>会议纪要</strong><small>会议记录与纪要</small></span></div>
+                <div class="templateItem"><span><strong>通知公告</strong><small>标题醒目，正文规范</small></span></div>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panelHead"><h2><span class="icon">▧</span>编辑模板</h2></div>
+              <div class="hint">内置模板不能直接修改，可以复制后编辑。</div>
+              <div class="formGrid">
+                <div class="field"><label>模板名称</label><div class="input">图片格式要求</div></div>
+                <div class="field"><label>模板说明</label><div class="input">标题居中，正文仿宋</div></div>
+                <div class="field"><label>标题字体</label><div class="input">方正小标宋_GBK</div></div>
+                <div class="field"><label>标题字号</label><div class="input">22</div></div>
+                <div class="field"><label>正文字体</label><div class="input">仿宋_GB2312</div></div>
+                <div class="field"><label>正文字号</label><div class="input">16</div></div>
+                <div class="field"><label>一级标题字体</label><div class="input">黑体</div></div>
+                <div class="field"><label>二级标题字体</label><div class="input">楷体_GB2312</div></div>
+                <div class="field"><label>行距 磅</label><div class="input">28</div></div>
+                <div class="field"><label>首行缩进 字符</label><div class="input">2</div></div>
+                <div class="field"><label>上边距 cm</label><div class="input">3.7</div></div>
+                <div class="field"><label>下边距 cm</label><div class="input">3.5</div></div>
+              </div>
+              <div class="checks"><span>☑ 中文括号归一</span><span>☑ 去除多余空格</span></div>
+              <div class="actions"><button class="button">⧉ 复制</button><button class="button">✓ 设为默认</button><button class="button danger">删除</button></div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="board" id="history">
+      <div class="app">
+        <aside class="side">
+          <div><div class="brand"><div class="mark">W</div><div><strong>文档工作台</strong><span>离线批量处理</span></div></div><nav class="nav"><button><span class="icon">▦</span>处理任务</button><button><span class="icon">▣</span>模板库</button><button class="active"><span class="icon">◷</span>任务记录</button><button><span class="icon">⚙</span>设置</button></nav></div>
+          <div></div><div class="offline"><span class="icon">✓</span>核心功能离线可用</div>
+        </aside>
+        <main class="main">
+          <header class="top"><div><h1>任务记录</h1><p>查看处理进度、文件结果和下载包。</p></div><button class="button">↻ 刷新</button></header>
+          <div class="grid">
+            <section class="panel">
+              <div class="panelHead"><h2><span class="icon">◷</span>任务列表</h2></div>
+              <div class="table">
+                <div class="row"><span class="status running">处理中</span><strong>a81f230c</strong><span>18/24 成功</span><span>2026/6/26 09:18</span><button class="mini">×</button></div>
+                <div class="row"><span class="status done">已完成</span><strong>b92d11aa</strong><span>46/46 成功</span><span>2026/6/25 16:42</span><button class="mini">×</button></div>
+                <div class="row"><span class="status warn">部分失败</span><strong>cc1920ef</strong><span>31/34 成功</span><span>2026/6/25 14:07</span><button class="mini">×</button></div>
+                <div class="row"><span class="status fail">失败</span><strong>f13a87ba</strong><span>0/8 成功</span><span>2026/6/24 18:33</span><button class="mini">×</button></div>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panelHead"><h2>任务 a81f230c</h2><button class="button primary">⇩ 下载 ZIP</button></div>
+              <p style="color:var(--muted);font-size:14px;margin-bottom:10px">处理中 · 成功 18 · 失败 1 · 剩余 5</p>
+              <div class="details">
+                <div class="fileRow"><span class="status done">已完成</span><span>通知.docx</span><span>处理完成</span></div>
+                <div class="fileRow"><span class="status done">已完成</span><span>会议纪要.docx</span><span>处理完成</span></div>
+                <div class="fileRow"><span class="status fail">失败</span><span>旧版合同.doc</span><span>未检测到 WPS/Office 自动化能力</span></div>
+                <div class="fileRow"><span class="status running">处理中</span><span>附件说明.docx</span><span>正在导出 PDF</span></div>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="board" id="settings">
+      <div class="app">
+        <aside class="side">
+          <div><div class="brand"><div class="mark">W</div><div><strong>文档工作台</strong><span>离线批量处理</span></div></div><nav class="nav"><button><span class="icon">▦</span>处理任务</button><button><span class="icon">▣</span>模板库</button><button><span class="icon">◷</span>任务记录</button><button class="active"><span class="icon">⚙</span>设置</button></nav></div>
+          <div></div><div class="offline"><span class="icon">✓</span>核心功能离线可用</div>
+        </aside>
+        <main class="main">
+          <header class="top"><div><h1>设置</h1><p>配置本机目录、保留策略和 GitHub 版本提示。</p></div><button class="button">↻ 刷新</button></header>
+          <div class="settingsLayout">
+            <section class="panel">
+              <div class="panelHead"><h2><span class="icon">⚙</span>本机配置</h2></div>
+              <div class="field"><label>默认打开位置</label><div class="input">D:\办公室资料</div></div>
+              <div class="formGrid">
+                <div class="field"><label>单批文件上限</label><div class="input">100</div></div>
+                <div class="field"><label>结果保留小时</label><div class="input">24</div></div>
+              </div>
+              <div class="field"><label>GitHub 仓库</label><div class="input">owner/word-batch-workbench</div></div>
+              <div class="actions"><button class="button primary">保存设置</button></div>
+            </section>
+            <div class="stack">
+              <section class="panel">
+                <div class="panelHead"><h2><span class="icon">ⓘ</span>应用信息</h2></div>
+                <dl>
+                  <div><dt>版本</dt><dd>1.0.0</dd></div>
+                  <div><dt>运行模式</dt><dd>桌面客户端</dd></div>
+                  <div><dt>数据目录</dt><dd>C:\WordBatchTool\data</dd></div>
+                  <div><dt>工作线程</dt><dd>2</dd></div>
+                </dl>
+                <div class="actions"><button class="button">↻ 检查 GitHub 更新</button></div>
+                <div class="updateBox"><strong>v1.1.0</strong><span>发现新版本，点击打开 GitHub Releases 下载。</span></div>
+              </section>
+              <section class="panel">
+                <div class="panelHead"><h2><span class="icon">✉</span>关于</h2></div>
+                <div class="author"><div class="avatar"></div><span><strong>JIAOKEQING</strong><small style="display:block;margin-top:5px;color:var(--muted)">jiaokeqing888@proton.me</small></span></div>
+              </section>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="board" id="platforms">
+      <div class="app">
+        <aside class="side">
+          <div><div class="brand"><div class="mark">W</div><div><strong>文档工作台</strong><span>离线批量处理</span></div></div><nav class="nav"><button><span class="icon">▦</span>处理任务</button><button><span class="icon">▣</span>模板库</button><button><span class="icon">◷</span>任务记录</button><button class="active"><span class="icon">⚙</span>设置</button></nav></div>
+          <div></div><div class="offline"><span class="icon">✓</span>核心功能离线可用</div>
+        </aside>
+        <main class="main">
+          <header class="top"><div><h1>平台适配</h1><p>检测当前系统和转换引擎，保证 Windows、华为电脑、统信都能离线运行。</p></div><button class="button">↻ 重新检测</button></header>
+          <section class="platformGrid">
+            <div class="platformCard active"><strong>Windows</strong><span>优先使用 WPS / Microsoft Office；未安装时降级为 LibreOffice。</span><em class="pill">支持</em></div>
+            <div class="platformCard"><strong>华为电脑</strong><span>支持 Windows 版华为电脑；Linux 环境使用 LibreOffice 引擎。</span><em class="pill">适配</em></div>
+            <div class="platformCard"><strong>统信 UOS</strong><span>使用系统 LibreOffice / WPS 命令行能力，提供 deb 安装包。</span><em class="pill">适配</em></div>
+          </section>
+          <div class="settingsLayout">
+            <section class="panel">
+              <div class="panelHead"><h2><span class="icon">▧</span>转换引擎</h2></div>
+              <div class="engineList">
+                <div class="engineRow"><span><strong>自动选择</strong><small>按系统检测可用引擎，优先使用效果最稳定的方案。</small></span><em class="pill">推荐</em></div>
+                <div class="engineRow"><span><strong>WPS / Office</strong><small>Windows 桌面环境下用于 .doc 转换和 PDF 导出。</small></span><em class="pill">已检测</em></div>
+                <div class="engineRow"><span><strong>LibreOffice Headless</strong><small>跨平台备用引擎，适用于统信 UOS 和 Linux 环境。</small></span><em class="pill">可安装</em></div>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panelHead"><h2><span class="icon">ⓘ</span>环境状态</h2></div>
+              <dl>
+                <div><dt>当前系统</dt><dd>Windows 11 / x64</dd></div>
+                <div><dt>文档引擎</dt><dd>WPS Office 自动化</dd></div>
+                <div><dt>备用引擎</dt><dd>LibreOffice 未安装</dd></div>
+                <div><dt>离线能力</dt><dd>模板、排版、任务记录、本地导出均可用</dd></div>
+              </dl>
+              <div class="updateBox"><strong>建议</strong><span>为统信 UOS 安装 LibreOffice 后，可获得稳定的 doc/docx/pdf 转换能力。</span></div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script>
+      const target = window.location.hash.replace("#", "");
+      if (target) {
+        document.querySelectorAll(".board").forEach((board) => {
+          board.style.display = board.id === target ? "block" : "none";
+        });
+      }
+    </script>
+  </body>
+</html>

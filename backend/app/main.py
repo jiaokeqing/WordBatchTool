@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import json
 import mimetypes
+import platform
 import shutil
 import sys
+import urllib.error
+import urllib.request
 from contextlib import asynccontextmanager
 from pathlib import Path
+from shutil import which
 from typing import Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -16,7 +20,19 @@ from fastapi.staticfiles import StaticFiles
 from . import repository
 from .config import settings
 from .database import init_db
-from .schemas import JobDetail, JobSummary, TemplateConfig, TemplatePreview
+from .schemas import (
+    AppInfo,
+    AppSettingsUpdate,
+    JobDetail,
+    JobSummary,
+    PlatformInfo,
+    TemplateConfig,
+    TemplateCreate,
+    TemplateLibraryItem,
+    TemplatePreview,
+    TemplateUpdate,
+    UpdateCheck,
+)
 from .services.cleanup import cleanup_expired_jobs
 from .services.docx_formatter import preview_template
 from .services.queue import enqueue_job
@@ -59,14 +75,12 @@ mimetypes.add_type("text/css", ".css")
 async def create_job(
     files: list[UploadFile] = File(default=[]),
     template_config: str = Form(default="{}"),
+    template_id: Optional[str] = Form(default=None),
     export_pdf: bool = Form(default=True),
-    server_directory: Optional[str] = Form(default=None),
     sample_template: Optional[UploadFile] = File(default=None),
 ) -> dict:
-    config = TemplateConfig.model_validate(json.loads(template_config or "{}"))
+    config = _resolve_template_config(template_config, template_id)
     upload_items = [file for file in files if file.filename]
-    if server_directory:
-        upload_items.extend(_files_from_server_directory(server_directory))
     if not upload_items:
         raise HTTPException(status_code=400, detail="请至少选择一个 Word 文件。")
     if len(upload_items) > settings.max_files_per_job:
@@ -168,6 +182,145 @@ async def template_preview(sample_template: UploadFile = File(...)) -> TemplateP
     return preview_template(path)
 
 
+@app.get("/api/templates", response_model=list[TemplateLibraryItem])
+def list_templates() -> list[dict]:
+    return repository.list_templates()
+
+
+@app.post("/api/templates", response_model=TemplateLibraryItem)
+def create_template(payload: TemplateCreate) -> dict:
+    return repository.create_template(payload)
+
+
+@app.put("/api/templates/{template_id}", response_model=TemplateLibraryItem)
+def update_template(template_id: str, payload: TemplateUpdate) -> dict:
+    try:
+        template = repository.update_template(template_id, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if not template:
+        raise HTTPException(status_code=404, detail="模板不存在。")
+    return template
+
+
+@app.delete("/api/templates/{template_id}")
+def delete_template(template_id: str) -> dict:
+    try:
+        deleted = repository.delete_template(template_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if not deleted:
+        raise HTTPException(status_code=404, detail="模板不存在。")
+    return {"ok": True}
+
+
+@app.post("/api/templates/{template_id}/duplicate", response_model=TemplateLibraryItem)
+def duplicate_template(template_id: str) -> dict:
+    template = repository.duplicate_template(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="模板不存在。")
+    return template
+
+
+@app.post("/api/templates/{template_id}/default", response_model=TemplateLibraryItem)
+def set_default_template(template_id: str) -> dict:
+    template = repository.set_default_template(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="模板不存在。")
+    return template
+
+
+@app.get("/api/app/info", response_model=AppInfo)
+def app_info() -> dict:
+    return {
+        "name": "文档工作台",
+        "version": settings.app_version,
+        "mode": "desktop" if getattr(sys, "frozen", False) else "web",
+        "data_dir": str(settings.data_dir.resolve()),
+        "max_files_per_job": _configured_int("max_files_per_job", settings.max_files_per_job),
+        "retention_hours": _configured_int("retention_hours", settings.retention_hours),
+        "worker_count": settings.worker_count,
+        "github_repo": _configured_github_repo(),
+    }
+
+
+@app.put("/api/app/settings", response_model=AppInfo)
+def update_app_settings(payload: AppSettingsUpdate) -> dict:
+    repository.set_setting("default_open_dir", payload.default_open_dir.strip())
+    repository.set_setting("max_files_per_job", str(payload.max_files_per_job))
+    repository.set_setting("retention_hours", str(payload.retention_hours))
+    repository.set_setting("github_repo", payload.github_repo.strip())
+    return app_info()
+
+
+@app.get("/api/app/update-check", response_model=UpdateCheck)
+def update_check() -> dict:
+    repo = _configured_github_repo()
+    if not repo:
+        return {
+            "ok": False,
+            "status": "not_configured",
+            "current_version": settings.app_version,
+            "message": "尚未配置 GitHub 仓库，无法检查更新。",
+        }
+    try:
+        latest = _fetch_latest_release(repo)
+    except Exception as exc:
+        return {
+            "ok": False,
+            "status": "offline",
+            "current_version": settings.app_version,
+            "message": f"无法连接 GitHub，离线功能不受影响：{exc}",
+        }
+    repository.set_setting("last_update_check", latest["checked_at"])
+    is_newer = _normalize_version(latest["tag_name"]) != _normalize_version(settings.app_version)
+    return {
+        "ok": True,
+        "status": "update_available" if is_newer else "latest",
+        "current_version": settings.app_version,
+        "latest_version": latest["tag_name"],
+        "release_url": latest["html_url"],
+        "message": "发现新版本。" if is_newer else "当前已是最新版本。",
+    }
+
+
+@app.get("/api/platform", response_model=PlatformInfo)
+def platform_info() -> dict:
+    system = platform.system()
+    machine = platform.machine() or "unknown"
+    libreoffice = which("soffice") or which("libreoffice")
+    engines = [
+        {
+            "id": "auto",
+            "name": "自动选择",
+            "status": "recommended",
+            "description": "按系统检测可用引擎，优先使用效果最稳定的方案。",
+        },
+        {
+            "id": "office",
+            "name": "WPS / Office",
+            "status": "available" if system == "Windows" else "unsupported",
+            "description": "Windows 桌面环境下用于 .doc 转换和 PDF 导出。",
+        },
+        {
+            "id": "libreoffice",
+            "name": "LibreOffice Headless",
+            "status": "available" if libreoffice else "missing",
+            "description": "跨平台备用引擎，适用于统信 UOS 和 Linux 环境。",
+        },
+    ]
+    recommended = "office" if system == "Windows" else "libreoffice"
+    return {
+        "os": system,
+        "machine": machine,
+        "platform_label": _platform_label(system),
+        "engines": engines,
+        "recommended_engine": recommended,
+        "offline_ready": True,
+        "message": "模板、排版、任务记录、本地导出均可离线使用。",
+    }
+
+
 def _job_summary(job: Optional[dict]) -> dict:
     if not job:
         raise HTTPException(status_code=404, detail="任务不存在。")
@@ -182,6 +335,63 @@ def _job_summary(job: Optional[dict]) -> dict:
         "failed_files": job["failed_files"],
         "export_pdf": bool(job["export_pdf"]),
     }
+
+
+def _resolve_template_config(template_config: str, template_id: Optional[str]) -> TemplateConfig:
+    if template_config and template_config.strip() not in {"", "{}"}:
+        return TemplateConfig.model_validate(json.loads(template_config))
+    if template_id:
+        template = repository.get_template(template_id)
+        if not template:
+            raise HTTPException(status_code=400, detail="选择的模板不存在。")
+        return template["config"]
+    default = repository.get_default_template()
+    return default["config"] if default else TemplateConfig()
+
+
+def _configured_int(key: str, default: int) -> int:
+    value = repository.get_setting(key, str(default))
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
+def _configured_github_repo() -> str:
+    return repository.get_setting("github_repo", settings.github_repo).strip()
+
+
+def _fetch_latest_release(repo: str) -> dict:
+    from .database import utc_now
+
+    request = urllib.request.Request(
+        f"https://api.github.com/repos/{repo}/releases/latest",
+        headers={"Accept": "application/vnd.github+json", "User-Agent": "WordBatchTool"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=6) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError(f"GitHub 返回 {exc.code}") from exc
+    return {
+        "tag_name": payload.get("tag_name") or payload.get("name") or "",
+        "html_url": payload.get("html_url") or f"https://github.com/{repo}/releases",
+        "checked_at": utc_now(),
+    }
+
+
+def _normalize_version(value: str) -> str:
+    return value.strip().lower().removeprefix("v")
+
+
+def _platform_label(system: str) -> str:
+    if system == "Windows":
+        return "Windows"
+    if system == "Linux":
+        return "Linux / 统信 UOS"
+    if system == "Darwin":
+        return "macOS"
+    return system or "未知系统"
 
 
 def _save_upload(upload: UploadFile, destination: Path) -> None:
@@ -203,13 +413,6 @@ def _safe_relative_path(name: str) -> Path:
     if not parts:
         return Path("unnamed.docx")
     return Path(*parts)
-
-
-def _files_from_server_directory(directory: str) -> list[Path]:
-    requested = Path(directory).resolve()
-    if not any(requested == allowed or requested.is_relative_to(allowed) for allowed in settings.allowed_dirs):
-        raise HTTPException(status_code=400, detail="该服务器目录不在允许导入范围内。")
-    return [path for path in requested.rglob("*") if path.suffix.lower() in {".doc", ".docx"} and path.is_file()]
 
 
 if frontend_dir:
