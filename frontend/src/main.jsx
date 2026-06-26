@@ -125,7 +125,7 @@ function App() {
     const data = await api('/api/app/info');
     setAppInfo(data);
     setSettingsDraft({
-      default_open_dir: '',
+      default_open_dir: data.default_open_dir || '',
       max_files_per_job: data.max_files_per_job,
       retention_hours: data.retention_hours,
       github_repo: data.github_repo,

@@ -60,6 +60,7 @@ class AppInfo(BaseModel):
     version: str
     mode: str
     data_dir: str
+    default_open_dir: str
     max_files_per_job: int
     retention_hours: int
     worker_count: int

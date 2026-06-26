@@ -237,6 +237,7 @@ def app_info() -> dict:
         "version": settings.app_version,
         "mode": "desktop" if getattr(sys, "frozen", False) else "web",
         "data_dir": str(settings.data_dir.resolve()),
+        "default_open_dir": repository.get_setting("default_open_dir", ""),
         "max_files_per_job": _configured_int("max_files_per_job", settings.max_files_per_job),
         "retention_hours": _configured_int("retention_hours", settings.retention_hours),
         "worker_count": settings.worker_count,

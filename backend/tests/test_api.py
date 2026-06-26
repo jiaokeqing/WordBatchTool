@@ -150,3 +150,24 @@ def test_app_and_platform_info_are_available(tmp_path: Path, monkeypatch) -> Non
     assert platform_response.status_code == 200
     assert update_response.status_code == 200
     assert update_response.json()["status"] == "not_configured"
+
+
+def test_app_settings_persist_default_open_dir(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(settings, "data_dir", tmp_path)
+    with TestClient(app) as client:
+        response = client.put(
+            "/api/app/settings",
+            json={
+                "default_open_dir": str(tmp_path / "docs"),
+                "max_files_per_job": 120,
+                "retention_hours": 48,
+                "github_repo": "owner/repo",
+            },
+        )
+        info = client.get("/api/app/info")
+
+    assert response.status_code == 200
+    assert info.json()["default_open_dir"] == str(tmp_path / "docs")
+    assert info.json()["max_files_per_job"] == 120
+    assert info.json()["retention_hours"] == 48
+    assert info.json()["github_repo"] == "owner/repo"
