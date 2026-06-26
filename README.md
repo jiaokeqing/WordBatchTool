@@ -1,6 +1,6 @@
-# 批量 Word 格式处理 Web 程序
+# 格式通
 
-一个用于办公室局域网的批量 Word 处理工具。支持上传 Word 文件或从服务器共享目录导入，批量统一排版，导出 PDF，并生成 ZIP 结果包下载。
+格式通是一款离线批量 Word 排版工具。支持选择 Word 文件或文件夹，套用本地模板，批量统一排版，导出 DOCX / PDF，并生成 ZIP 结果包。
 
 ## 技术栈
 
@@ -43,20 +43,20 @@ pip install -r requirements.txt
 pytest
 ```
 
-## Windows 打包 EXE
+## Windows / 华为 Windows 打包
 
 在 Windows 电脑上安装 Python 3.12、Node.js 18+ 和 WPS/Office 后，在项目根目录运行：
 
 ```powershell
-.\build_windows.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\package_desktop.ps1 -Target windows
 ```
 
-生成文件位于 `backend\dist\WordBatchTool.exe`。双击后会打开 Windows 客户端窗口，前端页面嵌入在窗口内，后端服务在本机后台运行。
+生成文件位于 `release\windows-x64\`，其中包含绿色版主程序、sidecar 和 NSIS 安装包。
 
 运行数据会保存到 exe 同目录的 `data` 文件夹中。PDF 导出和 `.doc` 转换仍需要 Windows 上安装可自动化调用的 WPS/Office。
 
 ## 新版 Tauri 桌面壳
 
-新版跨平台桌面壳脚手架位于 `frontend/src-tauri`，Python API sidecar 入口为 `backend/sidecar.py`。
+新版跨平台桌面壳位于 `frontend/src-tauri`，Python API sidecar 入口为 `backend/sidecar.py`。安装与使用说明见 `docs/格式通安装使用手册.md` 与 `docs/格式通安装使用手册.pdf`。
 
 详细说明见 `TAURI_DESKTOP.md`。当前目标是适配 Windows、华为电脑和统信 UOS；Windows 优先使用 WPS/Office，统信 UOS/Linux 优先使用 LibreOffice headless。

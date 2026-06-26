@@ -1,18 +1,18 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "文档工作台",
+  "productName": "格式通",
   "version": "1.0.0",
-  "identifier": "com.jiaokeqing.wordbatchworkbench",
+  "identifier": "com.jiaokeqing.geshitong",
   "build": {
-    "beforeDevCommand": "VITE_API_BASE=http://127.0.0.1:8765 pnpm run dev -- --host 127.0.0.1 --port 5173",
+    "beforeDevCommand": "node ../scripts/tauri_frontend.mjs dev",
     "devUrl": "http://127.0.0.1:5173",
-    "beforeBuildCommand": "VITE_API_BASE=http://127.0.0.1:8765 pnpm run build",
+    "beforeBuildCommand": "node ../scripts/tauri_frontend.mjs build",
     "frontendDist": "../dist"
   },
   "app": {
     "windows": [
       {
-        "title": "文档工作台",
+        "title": "格式通",
         "width": 1280,
         "height": 860,
         "minWidth": 980,
@@ -25,7 +25,10 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": "nsis",
+    "icon": [
+      "icons/icon.ico"
+    ],
     "externalBin": [
       "binaries/word-batch-sidecar"
     ]

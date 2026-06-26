@@ -43,6 +43,7 @@ def main() -> None:
             "--clean",
             "--noconfirm",
             "--onefile",
+            "--noconsole",
             "--name",
             "word-batch-sidecar",
             "--collect-submodules",

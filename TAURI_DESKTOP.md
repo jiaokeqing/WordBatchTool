@@ -59,6 +59,46 @@ python sidecar.py --host 127.0.0.1 --port 8765
 
 ## 打包
 
+推荐使用项目脚本执行完整桌面打包流程：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\package_desktop.ps1 -Target windows
+```
+
+如果 Python 已安装但当前终端没有识别，可显式传入 Python 路径：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\package_desktop.ps1 -Target windows -PythonCommand "C:\Path\To\python.exe"
+```
+
+华为 Windows 电脑仍使用 Windows x64 构建目标：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\package_desktop.ps1 -Target huawei-windows
+```
+
+华为统信 UOS / ARM64 设备需要在目标设备本机执行 Linux 构建流程，sidecar 目标为：
+
+```bash
+scripts/package_desktop.sh huawei-uos-arm64
+```
+
+如果 Python 命令不是 `python3`，可指定：
+
+```bash
+PYTHON_BIN=/path/to/python3 scripts/package_desktop.sh huawei-uos-arm64
+```
+
+也可以手动拆分执行：
+
+```bash
+python scripts/build_sidecar.py --target-triple aarch64-unknown-linux-gnu
+cd frontend
+pnpm tauri:build
+```
+
+手动拆分步骤如下：
+
 ```bash
 python scripts/build_sidecar.py
 cd frontend
@@ -67,6 +107,6 @@ pnpm tauri:build
 
 ## 后续待办
 
-- 为 Windows、统信 UOS、华为电脑分别补 CI/手动打包流程。
-- 增加 Tauri 保存文件对话框，替代浏览器下载 ZIP。
+- Windows / 华为 Windows x64 已完成最新 Release 构建，产物见 `release/windows-x64/`、`release/huawei-windows-x64/` 和 `frontend/src-tauri/target/release/bundle/nsis/`。
+- 在华为统信 UOS / ARM64 设备上执行 `python scripts/build_sidecar.py --target-triple aarch64-unknown-linux-gnu` 和 `pnpm tauri:build` 并记录产物。
 - 将 pywebview 打包流程标记为旧版兼容路径。

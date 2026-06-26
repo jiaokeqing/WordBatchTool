@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title desc">
+  <title id="title">格式通</title>
+  <desc id="desc">现代科技感文档格式处理工具标志</desc>
+  <defs>
+    <linearGradient id="bg" x1="16" y1="12" x2="82" y2="86" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1C8D8A"/>
+      <stop offset="0.55" stop-color="#246FB1"/>
+      <stop offset="1" stop-color="#173C78"/>
+    </linearGradient>
+    <linearGradient id="line" x1="31" y1="22" x2="68" y2="72" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E9FFFA"/>
+      <stop offset="1" stop-color="#B9D9FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" rx="22" fill="url(#bg)"/>
+  <path d="M27 24h33l13 13v35H27V24z" fill="rgba(255,255,255,.15)" stroke="rgba(255,255,255,.7)" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M60 24v15h13" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M38 46h24M38 58h19M38 70h12" stroke="url(#line)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M23 26l12 8-12 8" fill="none" stroke="#7EF0D5" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M73 54l-12 8 12 8" fill="none" stroke="#9CC8FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { invoke } from '@tauri-apps/api/core';
 import {
   Check,
   Copy,
@@ -25,8 +26,14 @@ import {
 } from 'lucide-react';
 import './styles.css';
 import authorAvatar from './assets/author-avatar.jpg';
+import geshitongLogo from './assets/geshitong-logo.svg';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+const APP_NAME = '格式通';
+
+function isTauriRuntime() {
+  return typeof window !== 'undefined' && Boolean(window.__TAURI_INTERNALS__);
+}
 
 const defaultTemplateConfig = {
   mode: 'builtin',
@@ -243,6 +250,12 @@ function App() {
         return;
       }
       const blob = await response.blob();
+      if (isTauriRuntime()) {
+        const bytes = Array.from(new Uint8Array(await blob.arrayBuffer()));
+        const savedPath = await invoke('save_zip_file', { suggestedName: `${jobId}.zip`, bytes });
+        if (savedPath) setMessage(`已保存到：${savedPath}`);
+        return;
+      }
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -327,10 +340,10 @@ function App() {
       <aside className="sidebar">
         <div>
           <div className="brand">
-            <div className="brandMark">W</div>
+            <img className="brandMark" src={geshitongLogo} alt={`${APP_NAME} logo`} />
             <div>
-              <strong>文档工作台</strong>
-              <span>离线批量处理</span>
+              <strong>{APP_NAME}</strong>
+              <span>离线批量排版</span>
             </div>
           </div>
           <nav className="navList" aria-label="主导航">
@@ -426,7 +439,7 @@ function App() {
 
       {showAvatarModal && (
         <div className="modalBackdrop" role="presentation" onClick={() => setShowAvatarModal(false)}>
-          <div className="avatarModal" role="dialog" aria-modal="true" aria-label="作者信息" onClick={(event) => event.stopPropagation()}>
+          <div className="avatarModal" role="dialog" aria-modal="true" aria-label="关于格式通" onClick={(event) => event.stopPropagation()}>
             <img className="modalAvatar" src={authorAvatar} alt="JIAOKEQING" />
             <div className="modalText">JIAOKEQING</div>
             <a className="mailLink" href="mailto:jiaokeqing888@proton.me">

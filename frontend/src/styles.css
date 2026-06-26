@@ -53,12 +53,6 @@ p { color: var(--muted); }
   width: 42px;
   height: 42px;
   border-radius: 10px;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font-size: 21px;
-  font-weight: 750;
-  background: linear-gradient(135deg, #1f6f61, #286fae);
   box-shadow: 0 10px 22px rgba(31, 111, 97, 0.22);
 }
 
@@ -205,6 +199,13 @@ p { color: var(--muted); }
 .selectedFiles, .templatePicker, .templateList, .jobList, .fileTable, .engineList {
   display: grid;
   gap: 8px;
+}
+
+.jobList,
+.fileTable {
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 2px;
 }
 
 .selectedFiles {
@@ -375,6 +376,13 @@ p { color: var(--muted); }
   grid-template-columns: minmax(360px, 0.95fr) minmax(460px, 1.05fr);
   gap: 16px;
   align-items: start;
+  min-width: 0;
+}
+
+.splitView > .panel,
+.pageGrid > .panel,
+.settingsGrid > .panel {
+  min-width: 0;
 }
 
 .templateSplit {
@@ -457,7 +465,7 @@ p { color: var(--muted); }
 .jobRow {
   min-height: 54px;
   display: grid;
-  grid-template-columns: 86px 100px 1fr 170px 34px;
+  grid-template-columns: 86px minmax(84px, 0.65fr) minmax(96px, 0.75fr) minmax(150px, 1fr) 34px;
   align-items: center;
   gap: 10px;
   border: 1px solid #e1e8ed;
@@ -466,6 +474,16 @@ p { color: var(--muted); }
   padding: 0 12px;
   text-align: left;
   cursor: pointer;
+  min-width: 560px;
+}
+
+.jobRow > strong,
+.jobRow > span:not(.status):not(.jobActions),
+.fileRow > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .jobRow.active {
@@ -515,6 +533,7 @@ p { color: var(--muted); }
   align-items: center;
   border-bottom: 1px solid #edf1f4;
   font-size: 13px;
+  min-width: 520px;
 }
 
 .emptyState {
@@ -713,6 +732,7 @@ p { color: var(--muted); }
 
   .jobRow, .fileRow {
     grid-template-columns: 1fr;
+    min-width: 0;
     padding: 10px;
   }
 
