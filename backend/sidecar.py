@@ -8,7 +8,7 @@ import uvicorn
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="文档工作台本地 API sidecar")
+    parser = argparse.ArgumentParser(description="格式通本地 API sidecar")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", default=8765, type=int)
     parser.add_argument("--data-dir", default="")

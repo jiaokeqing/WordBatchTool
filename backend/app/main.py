@@ -45,7 +45,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="批量 Word 格式处理", lifespan=lifespan)
+app = FastAPI(title="格式通本地 API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -162,7 +162,7 @@ def delete_job(job_id: str) -> dict:
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"ok": True, "name": "文档工作台 API", "version": settings.app_version}
+    return {"ok": True, "name": "格式通 API", "version": settings.app_version}
 
 
 @app.get("/api/jobs/{job_id}/download")
@@ -238,7 +238,7 @@ def set_default_template(template_id: str) -> dict:
 @app.get("/api/app/info", response_model=AppInfo)
 def app_info() -> dict:
     return {
-        "name": "文档工作台",
+        "name": "格式通",
         "version": settings.app_version,
         "mode": "desktop" if getattr(sys, "frozen", False) else "web",
         "data_dir": str(settings.data_dir.resolve()),
@@ -350,7 +350,7 @@ def _fetch_latest_release(repo: str) -> dict:
 
     request = urllib.request.Request(
         f"https://api.github.com/repos/{repo}/releases/latest",
-        headers={"Accept": "application/vnd.github+json", "User-Agent": "WordBatchTool"},
+        headers={"Accept": "application/vnd.github+json", "User-Agent": "GeshiTong"},
     )
     try:
         with urllib.request.urlopen(request, timeout=6) as response:
