@@ -85,7 +85,7 @@ function App() {
   const selectedCount = useMemo(() => files.length, [files]);
 
   useEffect(() => {
-    refreshAll();
+    boot();
     const timer = setInterval(() => loadJobs().catch(() => {}), 2500);
     return () => clearInterval(timer);
   }, []);
@@ -104,6 +104,29 @@ function App() {
 
   async function refreshAll() {
     await Promise.all([loadTemplates(), loadJobs(), loadAppInfo(), loadPlatformInfo()]);
+  }
+
+  async function boot() {
+    try {
+      await waitForApi();
+      await refreshAll();
+    } catch (error) {
+      setMessage(`本地服务未就绪：${error.message}`);
+    }
+  }
+
+  async function waitForApi() {
+    let lastError = null;
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      try {
+        await api('/api/health');
+        return;
+      } catch (error) {
+        lastError = error;
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+    }
+    throw lastError || new Error('无法连接本地 API');
   }
 
   async function loadTemplates() {

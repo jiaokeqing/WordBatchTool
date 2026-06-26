@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "identifier": "com.jiaokeqing.wordbatchworkbench",
   "build": {
-    "beforeDevCommand": "pnpm run dev -- --host 127.0.0.1 --port 5173",
+    "beforeDevCommand": "VITE_API_BASE=http://127.0.0.1:8765 pnpm run dev -- --host 127.0.0.1 --port 5173",
     "devUrl": "http://127.0.0.1:5173",
     "beforeBuildCommand": "VITE_API_BASE=http://127.0.0.1:8765 pnpm run build",
     "frontendDist": "../dist"

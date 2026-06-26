@@ -24,6 +24,15 @@ def test_create_job_rejects_empty_upload(tmp_path: Path, monkeypatch) -> None:
     assert response.status_code == 400
 
 
+def test_health_endpoint(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(settings, "data_dir", tmp_path)
+    with TestClient(app) as client:
+        response = client.get("/api/health")
+
+    assert response.status_code == 200
+    assert response.json()["ok"] is True
+
+
 def test_template_preview(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(settings, "data_dir", tmp_path)
     sample = tmp_path / "sample.docx"

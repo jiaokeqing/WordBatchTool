@@ -160,6 +160,11 @@ def delete_job(job_id: str) -> dict:
     return {"ok": True}
 
 
+@app.get("/api/health")
+def health() -> dict:
+    return {"ok": True, "name": "文档工作台 API", "version": settings.app_version}
+
+
 @app.get("/api/jobs/{job_id}/download")
 def download_job(job_id: str) -> FileResponse:
     job = repository.get_job(job_id)
