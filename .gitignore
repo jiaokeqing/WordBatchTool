@@ -9,10 +9,19 @@ __pycache__/
 # Runtime data
 backend/data/
 data/
+.tmp_manual_pdf.html
+.tmp-edge-pdf/
+.tmp-static-preview*
 
 # Build artifacts
 backend/build*/
 backend/dist*/
+backend/word-batch-sidecar.spec
+release/
+frontend/src-tauri/target/
+frontend/src-tauri/gen/
+frontend/src-tauri/binaries/*
+!frontend/src-tauri/binaries/.gitkeep
 
 # Frontend
 .npm-cache/

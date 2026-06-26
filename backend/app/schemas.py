@@ -34,6 +34,72 @@ class TemplateConfig(BaseModel):
     sample_template_filename: Optional[str] = None
 
 
+class TemplateCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    description: str = Field(default="", max_length=240)
+    config: TemplateConfig = Field(default_factory=TemplateConfig)
+
+
+class TemplateUpdate(TemplateCreate):
+    pass
+
+
+class TemplateLibraryItem(BaseModel):
+    id: str
+    name: str
+    description: str
+    config: TemplateConfig
+    is_builtin: bool
+    is_default: bool
+    created_at: str
+    updated_at: str
+
+
+class AppInfo(BaseModel):
+    name: str
+    version: str
+    mode: str
+    data_dir: str
+    default_open_dir: str
+    max_files_per_job: int
+    retention_hours: int
+    worker_count: int
+    github_repo: str
+
+
+class AppSettingsUpdate(BaseModel):
+    default_open_dir: str = Field(default="", max_length=500)
+    max_files_per_job: int = Field(default=100, ge=1, le=500)
+    retention_hours: int = Field(default=24, ge=1, le=720)
+    github_repo: str = Field(default="", max_length=200)
+
+
+class UpdateCheck(BaseModel):
+    ok: bool
+    status: str
+    current_version: str
+    latest_version: Optional[str] = None
+    release_url: Optional[str] = None
+    message: str
+
+
+class PlatformEngine(BaseModel):
+    id: str
+    name: str
+    status: str
+    description: str
+
+
+class PlatformInfo(BaseModel):
+    os: str
+    machine: str
+    platform_label: str
+    engines: list[PlatformEngine]
+    recommended_engine: str
+    offline_ready: bool
+    message: str
+
+
 class JobSummary(BaseModel):
     id: str
     status: str

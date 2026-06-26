@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Iterator
 
 from .config import settings
+from .schemas import BuiltInTemplate, TemplateConfig
 
 
 def utc_now() -> str:
@@ -48,6 +49,51 @@ def init_db() -> None:
             )
             """
         )
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS templates (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT NOT NULL DEFAULT '',
+                config_json TEXT NOT NULL,
+                is_builtin INTEGER NOT NULL DEFAULT 0,
+                is_default INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS app_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+        seed_builtin_template(db)
+
+
+def seed_builtin_template(db: sqlite3.Connection) -> None:
+    row = db.execute("SELECT id FROM templates WHERE id = ?", ("builtin-paper-photo",)).fetchone()
+    if row:
+        return
+    now = utc_now()
+    db.execute(
+        """
+        INSERT INTO templates (id, name, description, config_json, is_builtin, is_default, created_at, updated_at)
+        VALUES (?, ?, ?, ?, 1, 1, ?, ?)
+        """,
+        (
+            "builtin-paper-photo",
+            "图片格式要求",
+            "标题居中，正文仿宋，标题顶格，正文首行缩进。",
+            TemplateConfig(builtin=BuiltInTemplate(preset="paper-photo")).model_dump_json(),
+            now,
+            now,
+        ),
+    )
 
 
 def dict_factory(cursor: sqlite3.Cursor, row: tuple) -> dict:
