@@ -9,7 +9,6 @@ import urllib.error
 import urllib.request
 from contextlib import asynccontextmanager
 from pathlib import Path
-from shutil import which
 from typing import Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -34,6 +33,7 @@ from .schemas import (
     UpdateCheck,
 )
 from .services.cleanup import cleanup_expired_jobs
+from .services.converter import detect_engines, recommended_engine_id
 from .services.docx_formatter import preview_template
 from .services.queue import enqueue_job
 
@@ -288,34 +288,12 @@ def update_check() -> dict:
 def platform_info() -> dict:
     system = platform.system()
     machine = platform.machine() or "unknown"
-    libreoffice = which("soffice") or which("libreoffice")
-    engines = [
-        {
-            "id": "auto",
-            "name": "自动选择",
-            "status": "recommended",
-            "description": "按系统检测可用引擎，优先使用效果最稳定的方案。",
-        },
-        {
-            "id": "office",
-            "name": "WPS / Office",
-            "status": "available" if system == "Windows" else "unsupported",
-            "description": "Windows 桌面环境下用于 .doc 转换和 PDF 导出。",
-        },
-        {
-            "id": "libreoffice",
-            "name": "LibreOffice Headless",
-            "status": "available" if libreoffice else "missing",
-            "description": "跨平台备用引擎，适用于统信 UOS 和 Linux 环境。",
-        },
-    ]
-    recommended = "office" if system == "Windows" else "libreoffice"
     return {
         "os": system,
         "machine": machine,
         "platform_label": _platform_label(system),
-        "engines": engines,
-        "recommended_engine": recommended,
+        "engines": [engine.__dict__ for engine in detect_engines()],
+        "recommended_engine": recommended_engine_id(),
         "offline_ready": True,
         "message": "模板、排版、任务记录、本地导出均可离线使用。",
     }
